@@ -8,6 +8,7 @@
 -- Four file formats that can be imported into SQL Server: CSV (Comma-Separated Values), TXT (Text Files), Excel Files (.xls, .xslx), XML (Extensible Markup Language).
 
 
+--Q3)Create a table Products with columns: ProductID (INT, PRIMARY KEY), ProductName (VARCHAR(50)), Price (DECIMAL(10,2)).
 DROP TABLE Products;
 
 CREATE TABLE Products (
@@ -27,7 +28,7 @@ VALUES
 -- NAME must have a value (NOT NULL)
 -- Email can be left empty (NULL is allowed)
 
-
+--Q6)Add a UNIQUE constraint to the ProductName column in the Products table.
 ALTER TABLE Products
 ADD CONSTRAINT UQ_ProductNAme UNIQUE (ProductName);
 
@@ -41,8 +42,8 @@ CategoryName VARCHAR(50) UNIQUE
 );
 
 ----------------------------------------------------------------------------------------------------------
---bcp MyDatabase.dbo.Products out "C:\Users\User\Desktop\Products.txt" -c -t, -T -S DESKTOP-6MQ5SVJ
--- task was done 
+--
+-- task was done that Add a UNIQUE constraint to the ProductName column in the Products table using object explorer's export data 
 --id,name,description,price
 --1, Wireless Mouse, A wireless mouse with ergonomic design,29.99
 --2, Bluetooth Headphones,Over-ear headphones with Bluetooth connectivity,79.99
@@ -55,6 +56,7 @@ CategoryName VARCHAR(50) UNIQUE
 
 -- Medium_Level Tasks
 ------------------------------------------------------------------------
+--medium Q1_Use BULK INSERT to import data from a text file into the Products table.
 create table Products2 (ProductID int, ProductName varchar(50), Description varchar(100), Price decimal(10,2))
 
 BULK INSERT Products2
@@ -64,11 +66,14 @@ FIELDTERMINATOR = ',',
 ROWTERMINATOR = '\n',
 FIRSTROW = 2
 );
+
+--MEdium Q2) Import data from an Excel file into a table called Sales using SSMS Import Wizard. --> it  done
 --"C:\Users\User\Sources for Bulk\Products.txt"
 Select * from Products2
 truncate table products2
 -----------------------------------------------------------------------
 
+--Q3)Write a query that exports the Products table data into an XML format using FOR XML.
 SELECT ProductID, ProductName, Price
 FROM Products
 FOR XML AUTO, ROOT('Products');
@@ -80,23 +85,27 @@ WHERE TABLE_NAME = 'Products';
 ALTER TABLE Products
 ADD CategoryID INT;
 
-
+--q4)Create a FOREIGN KEY in the Products table that references the Categories table.
 ALTER TABLE Products
 ADD CONSTRAINT FK_Products_Categories
 FOREIGN KEY (CategoryID) REFERENCES Categories(CategoryID);
 
+
+--Q5)Add a CHECK constraint to the Products table ensuring Price > 0.
 ALTER TABLE Products
 ADD CONSTRAINT CHK_Product_Price CHECK (Price>0);
 
-
+--Q6)Add a CHECK constraint to the Products table ensuring Price > 0.
 SELECT ProductID, ProductName, Price
 FROM Products
 FOR JSON AUTO;
 
+--Modify the Products table to add a column Stock (INT, NOT NULL).
 ALTER TABLE Products
 ADD Stock INT NOT NULL DEFAULT 0;
 
-SELECT ProductID, ProductName, ISNULL(Stock, 0) AS Stock
+--Use the ISNULL function to replace NULL values in a column with a default value.
+SELECT ProductID, isnull(ProductName,0)
 FROM Products;
 
 -- A FOREIGN KEY enforces referential integrity by ensuring a column's values exist in another table; Prevents orphaned records.
@@ -104,31 +113,14 @@ FROM Products;
 
 
 -- Hard-Level Tasks
-
-SELECT name AS ForeignKeyName, OBJECT_NAME(parent_object_id) AS TableName
-FROM sys.foreign_keys
-WHERE referenced_object_id = OBJECT_ID('dbo.Customers');
-
-SELECT 
-[name] AS ForeignKeyName,
-OBJECT_NAME(parent_object_id) AS TableName
-FROM sys.foreign_keys
-WHERE referenced_object_id = OBJECT_ID('dbo.Customers');
-
-ALTER TABLE Orders DROP CONSTRAINT FK__Orders__CustID__33008CF0
-
-
-
-DROP TABLE dbo.Customers;
-
+--Write a script to create a Customers table with a CHECK constraint ensuring Age >= 18.
 CREATE TABLE Customers (
 CustomerID INT PRIMARY KEY,
 Name NVARCHAR(100) NOT NULL,
 Age INT CHECK (Age >= 18) NOT NULL
 );
 
-
--- Enable Ad Hoc Distributed Queries
+--Q2)Import data from a JSON file into a table called Orders using OPENROWSET
 EXEC sp_configure 'show advanced options', 1;
 RECONFIGURE;
 EXEC sp_configure 'Ad Hoc Distributed Queries', 1;
@@ -153,15 +145,35 @@ WITH (
 	plural VARCHAR(20)
 	)
 Select * from From_json
-----
-DROP TABLE dbo.Products;
 
+--Create a table with an IDENTITY column starting at 100 and incrementing by 10.
 CREATE TABLE Products (
 ProductID INT IDENTITY(100,10) PRIMARY KEY,
 ProductName NVARCHAR(100) NOT NULL,
 Price DECIMAL(10,2) NOT NULL
 );
 
+SELECT name AS ForeignKeyName, OBJECT_NAME(parent_object_id) AS TableName
+FROM sys.foreign_keys
+WHERE referenced_object_id = OBJECT_ID('dbo.Customers');
+
+SELECT 
+[name] AS ForeignKeyName,
+OBJECT_NAME(parent_object_id) AS TableName
+FROM sys.foreign_keys
+WHERE referenced_object_id = OBJECT_ID('dbo.Customers');
+
+ALTER TABLE Orders DROP CONSTRAINT FK__Orders__CustID__33008CF0
+
+DROP TABLE dbo.Customers;
+
+-- Enable Ad Hoc Distributed Queries
+
+----
+DROP TABLE dbo.Products;
+
+
+--Write a query to create a composite PRIMARY KEY in a new table OrderDetails.
 CREATE TABLE OrderDetails (
 OrderID INT,
 ProductID INT,
@@ -169,7 +181,7 @@ Quantity INT NOT NULL,
 PRIMARY KEY (OrderID, ProductID)
 );
 
-
+--Explain with examples the use of COALESCE and ISNULL functions for handling NULL values.
 SELECT
 COALESCE(NULL, NULL, 'First Non-Null') AS CoalesceResult;
 ISNULL(NULL, 'Second Non-Null') AS IsNullResult;
@@ -187,6 +199,7 @@ create table products (id int, name varchar(50), description varchar(50), price 
 select * from Products
 select * from Products2
 
+-- Use the MERGE statement to import data from a text file into Products, updating existing records and inserting new ones.
  BULK INSERT Products2
 FROM 'C:\Users\User\Sources for Bulk\Products.txt'
 WITH (
@@ -212,13 +225,9 @@ WHEN NOT MATCHED THEN
     INSERT (ID, Name,description,Price)
     VALUES (source.ProductID, source.ProductName,source.description,source.Price);
 
-
-
-
-
-
 select * from Products2
 
+--Create a table Employees with both PRIMARY KEY on EmpID and UNIQUE KEY on Email.
 	CREATE TABLE Employees (
 	EmpID INT PRIMARY KEY,
 	Name NVARCHAR(100) NOT NULL,
@@ -227,7 +236,7 @@ select * from Products2
 
 	ALTER TABLE Orders 
 	ADD NewColumnName NVARCHAR(100);
-
+--Write a query to create a FOREIGN KEY with ON DELETE CASCADE and ON UPDATE CASCADE options.
 	CREATE TABLE Orders_New(
 	OrderID INT PRIMARY KEY,
 	CustomerID INT,
